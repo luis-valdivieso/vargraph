@@ -1,0 +1,40 @@
+name: Continuous integration
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    
+    runs-on: ubuntu-latest
+
+    steps:
+      
+    # Download codebase
+    - uses: actions/checkout@v6
+    
+    # Install Python and dependencies
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.9'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install -e ".[dev]"
+
+    # Code linting
+    - name: Lint code with Ruff
+      run: ruff check --output-format=github --target-version=py39
+    - name: Check code formatting with Ruff
+      run: ruff format --diff --target-version=py39
+      continue-on-error: true
+
+    # Tests
+    - name: Test with pytest
+      run: pytest tests/ --junitxml=junit/test-results.xml
+
+
