@@ -26,19 +26,31 @@ def test_add_node():
 def test_add_edge_directed():
     g = VarGraph(directed=True)
 
-    g.add_edge("A", "B", "x")
+    g.add_edge("A", "B", "x + 2")
 
     assert "A" in g.graph
     assert "B" in g.graph
-    assert g.graph["A"]["B"] == "x"
-    assert "A" not in g.graph["B"]  # A shouldn't be connected to B
+    assert g.graph["A"]["B"] == sp.sympify("x+2")
+    assert isinstance(g.graph["A"]["B"], sp.Expr)
+    assert "A" not in g.graph["B"]  # B shouldn't be connected back to A
 
 def test_add_edge_undirected():
     g = VarGraph(directed=False)
 
-    g.add_edge("A", "B", "x")
+    g.add_edge("A", "B", "x + 2")
 
     assert "A" in g.graph
     assert "B" in g.graph
-    assert g.graph["A"]["B"] == "x"
-    assert g.graph["B"]["A"] == "x"
+    assert g.graph["A"]["B"] == sp.sympify("x+2")
+    assert g.graph["B"]["A"] == sp.sympify("x+2")
+    assert isinstance(g.graph["B"]["A"], sp.Expr)
+    assert isinstance(g.graph["A"]["B"], sp.Expr)
+
+def test_free_symbols():
+    g = VarGraph()
+    g.add_edge("A", "B", "x + 2")
+    g.add_edge ("B", "C", "y**2 + x + 1")
+
+    expected_symbols = {sp.Symbol("x"), sp.Symbol("y")}
+
+    assert g.free_symbols == expected_symbols
