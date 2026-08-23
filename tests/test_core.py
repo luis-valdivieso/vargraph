@@ -1,6 +1,7 @@
-import pytest
 import sympy as sp
+
 from vargraph import VarGraph
+
 
 def test_vargraph_initialization():
     g_undirected = VarGraph()

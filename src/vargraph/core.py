@@ -1,5 +1,6 @@
 import sympy as sp
 
+
 class VarGraph:
     def __init__(self, directed=False):
         self.directed = directed
