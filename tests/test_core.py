@@ -75,3 +75,21 @@ def test_get_adjacency_matrix_automatic_order():
     assert matrix == sp.Matrix(expected_matrix)
     assert nodes == ["A", "B", "C"]
 
+def test_get_adjacency_matrix_defined_order():
+    g = VarGraph(directed=True)
+    g.add_edge("A", "A", "y")
+    g.add_edge("A", "B", "x + 2")
+    g.add_edge("B", "A", "x + 2")
+    g.add_edge("B", "C", "y**2 + x + 1")
+    g.add_edge("C", "B", "y**1 + x")
+    g.add_edge("A", "C", 5)
+
+    expected_matrix = [
+        [sp.sympify("y"), sp.sympify(5)],
+        [sp.S.Zero, sp.S.Zero]
+    ]
+    
+    matrix, nodes = g.get_adjacency_matrix(["A", "C"])
+    
+    assert matrix == sp.Matrix(expected_matrix)
+    assert nodes == ["A","C"]
