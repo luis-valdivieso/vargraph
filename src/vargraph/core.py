@@ -51,3 +51,12 @@ class VarGraph:
             row_list.append(row)
 
         return sp.Matrix(row_list), nodelist
+
+    def evaluate(self, subs_dict):
+        new_graph = VarGraph(directed=self.directed)
+        for node in self.graph:
+            new_graph.add_node(node)
+            for other_node, weight in self.graph[node].items():
+                new_graph.add_edge(node, other_node, weight.subs(subs_dict).evalf())
+        return new_graph
+        
