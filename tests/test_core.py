@@ -94,3 +94,23 @@ def test_get_adjacency_matrix_defined_order():
     
     assert matrix == sp.Matrix(expected_matrix)
     assert nodes == ["A","C"]
+
+def test_evaluate_all_variables_substituted():
+    g = VarGraph(directed=True)
+    g.add_edge("A", "B", "y")
+    g.add_edge("B", "C", "x + 2")
+    g.add_node("C")
+    g.add_edge("A", "C", 5)
+
+    subs_dict = {"x" : 5, "y": 1}
+    substituted_graph = g.evaluate(subs_dict)
+
+    assert substituted_graph.graph == {
+        "A": {"B": sp.Float(1.0), "C": sp.Float(5.0)},
+        "B": {"C": sp.Float(7.0)},
+        "C": {},
+    }
+
+    assert g.graph["B"]["C"] == sp.sympify("x + 2")
+
+    
