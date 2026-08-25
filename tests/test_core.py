@@ -130,3 +130,25 @@ def test_evaluate_one_variable_substituted():
     }
 
     assert g.graph["B"]["C"] == sp.sympify("x + 2")
+
+def test_get_symbolic_paths():
+    g = VarGraph(directed=True)
+    g.add_edge("A", "B", "x")
+    g.add_edge("B", "C", "x")
+
+    assert g.get_symbolic_paths("A", "C") == [(["A", "B", "C"], sp.sympify("2*x"))]
+
+    g = VarGraph(directed=True)
+    g.add_edge("A", "B", "x")
+    g.add_edge("B", "C", "x")
+    g.add_edge("A", "D", "y")
+    g.add_edge("D", "C", 5)
+
+    assert g.get_symbolic_paths("A", "C") == [(["A", "B", "C"], sp.sympify("2*x")), (["A", "D", "C"], sp.sympify("y+5")) ]
+
+    g = VarGraph(directed=True)
+    g.add_edge("A", "B", "x")
+    g.add_edge("B", "C", "x")
+    g.add_edge("C", "A", "y")
+
+    assert g.get_symbolic_paths("A", "C") == [(["A", "B", "C"], sp.sympify("2*x")) ]
