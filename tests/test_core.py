@@ -145,3 +145,10 @@ def test_get_symbolic_paths():
     g.add_edge("D", "C", 5)
 
     assert g.get_symbolic_paths("A", "C") == [(["A", "B", "C"], sp.sympify("2*x")), (["A", "D", "C"], sp.sympify("y+5")) ]
+
+    g = VarGraph(directed=True)
+    g.add_edge("A", "B", "x")
+    g.add_edge("B", "C", "x")
+    g.add_edge("C", "A", "y")
+
+    assert g.get_symbolic_paths("A", "C") == [(["A", "B", "C"], sp.sympify("2*x")) ]
