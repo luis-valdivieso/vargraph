@@ -59,4 +59,31 @@ class VarGraph:
             for other_node, weight in self.graph[node].items():
                 new_graph.add_edge(node, other_node, weight.subs(subs_dict).evalf())
         return new_graph
-        
+
+    def get_symbolic_paths(self, source, target):
+        # Node validation
+        if source not in self.graph:
+            raise ValueError(f"Node '{source}' does not exist in the graph.")
+        if target not in self.graph:
+            raise ValueError(f"Node '{target}' does not exist in the graph.")
+
+        paths_found = []
+
+        # Auxiliary dfs function
+        def dfs(current_node, current_path, current_cost, visited):
+            current_path.append(current_node)
+            visited.add(current_node)
+
+            if current_node == target:
+                paths_found.append((list(current_path), sp.simplify(current_cost)))
+            else:
+                for neighbour, weight in self.graph[current_node].items():
+                    if neighbour not in visited:
+                        dfs(neighbour, current_path, current_cost + weight, visited)
+            # Backtracking
+            current_path.pop()
+            visited.remove(current_node)
+
+        dfs(source, [], sp.S.Zero, set())
+
+        return paths_found
