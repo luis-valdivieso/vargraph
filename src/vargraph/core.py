@@ -37,7 +37,13 @@ class VarGraph:
 
     def get_nodes(self):
         return list(self._graph.keys())
-    
+
+    def get_neighbors(self, node):
+        if node not in self._graph:
+            raise ValueError(f"Node {node} does not exist")
+        else:
+            return list(self._graph[node].keys())
+        
     def get_adjacency_matrix(self, nodelist=None):
         
         if nodelist is None:
