@@ -2,13 +2,29 @@ import sympy as sp
 
 
 class VarGraph:
+    """
+    A graph object that allows to store symbolic expressions as weights.
+
+    This class allows to get adjacency matrices, compute paths from an origin to a target, and build mathematical nets, all of this using Sympy methods.
+
+    Attributes:
+        directed (bool): allows to specify if a graph is directed (True) or undirected (False, by default)
+    """
     def __init__(self, directed=False):
+        """
+        Initializes a new empty graph
+
+        Args:
+            directed (bool, optional): allows to specify if a graph is directed (True) or undirected (False, by default)
+        """
         self.directed = directed
         self._graph = {}
 
     @property
     def free_symbols(self):
-        "Returns the complete set of free_symbols of the weights expressions of the graph"
+        """
+        Returns the complete set of free_symbols of the weights expressions of the graph.
+        """
         symbols = set()
         for neighbors in self._graph.values():
             for weight in neighbors.values():
@@ -17,12 +33,24 @@ class VarGraph:
         return symbols
 
     def add_node(self, node):
-        """Adds an isolated node if it doesn't exist previously"""
+        """
+        Adds an isolated node if it doesn't exist previously
+        
+        Args:
+            node (str): Node that will be added to the graph
+        """
         if node not in self._graph:
             self._graph[node] = {}
 
     def add_edge(self, u, v, weight=1):
-        """Adds an edge between u and v with a weight"""
+        """
+        Adds an edge between u and v with a weight
+        
+        Args:
+            u (str): Origin of the edge
+            v (str): End of the edge
+            weight (optional): Weight of the edge (by default is 1). Should be a sympy convertible formula
+        """
         # If the nodes are new, we initialize the internal dictionaries
         self.add_node(u)
         self.add_node(v)
@@ -36,15 +64,40 @@ class VarGraph:
             self._graph[v][u] = sympified_weight
 
     def get_nodes(self):
+        """
+        Returns all the list of nodes of the graph.
+
+        Returns:
+            list: A list containing all the nodes of the graph.
+        """
         return list(self._graph.keys())
 
     def get_neighbors(self, node):
+        """
+        Returns all the neighbors of a given node
+
+        Args:
+            node (str): Node which we will get the neighbors from 
+        
+        Raises:
+            ValueError: If the node does not exist
+        """
         if node not in self._graph:
             raise ValueError(f"Node {node} does not exist")
         else:
             return list(self._graph[node].keys())
 
     def get_weight(self, u, v):
+        """
+        Returns the weight of the u-v edge
+
+        Args:
+            u (str): Origin of the edge
+            v (str): End of the edge 
+
+        Raises: 
+            ValueError if any of the nodes does not exists
+        """
         if u not in self._graph:
             raise ValueError(f"Node {u} does not exist")
         if v not in self._graph:
@@ -52,6 +105,13 @@ class VarGraph:
         return self._graph[u].get(v)
 
     def get_edges(self):
+        """
+        Returns all the edges of the graph.
+        
+
+        Returns:
+            list: A list containing all the edges of the graph.
+        """
         edges = []
         for u, neighbors in self._graph.items():
             for v, weight in neighbors.items():
@@ -59,7 +119,16 @@ class VarGraph:
         return edges
     
     def get_adjacency_matrix(self, nodelist=None):
-        
+        """
+        Returns a Sympy adjacency matrix of the graph
+
+        Args:
+            nodelist: A list that contains the nodes that will appear in the adjacency matrix. By default is empty.
+
+        Returns:
+            - A Sympy matrix with all the desired nodes
+            - A node list with all the desired nodes
+        """
         if nodelist is None:
             nodelist = list(self._graph.keys())
         row_list = []
@@ -76,6 +145,12 @@ class VarGraph:
         return sp.Matrix(row_list), nodelist
 
     def evaluate(self, subs_dict):
+        """
+        Returns a graph with all the variables susbtituted in it
+
+        Args:
+            subs_dict: Dictionary that contains the variables that you want to substitute and the values to substitute them. For example {"x": 3.0, "y":7.0}
+        """
         new__graph = VarGraph(directed=self.directed)
         for node in self._graph:
             new__graph.add_node(node)
@@ -84,6 +159,18 @@ class VarGraph:
         return new__graph
 
     def get_symbolic_paths(self, source, target):
+        """
+        Returns a list a tuple representing all the paths between source and target nodes.
+
+        Args: 
+            source (str): Node from which the path will begin
+            target (str): Node that the path will end in
+
+        Returns:
+            list of tuple: A list where each element is a tuple containing:
+            - A node list representing the path (ordered).
+            - A Sympy object representing the path cost.
+        """
         # Node validation
         if source not in self._graph:
             raise ValueError(f"Node '{source}' does not exist in the _graph.")
