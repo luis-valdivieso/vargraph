@@ -50,7 +50,14 @@ class VarGraph:
         if v not in self._graph:
             raise ValueError(f"Node {v} does not exist")
         return self._graph[u].get(v)
-        
+
+    def get_edges(self):
+        edges = []
+        for u, neighbors in self._graph.items():
+            for v, weight in neighbors.items():
+                edges.append((u, v, weight))
+        return edges
+    
     def get_adjacency_matrix(self, nodelist=None):
         
         if nodelist is None:
