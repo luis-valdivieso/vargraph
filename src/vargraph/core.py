@@ -134,7 +134,7 @@ class VarGraph:
         row_list = []
         for node in nodelist:
             if node not in self._graph:
-                raise ValueError(f"El nodo '{node}' no existe en el grafo.")
+                raise ValueError(f"Node '{node}' does not exist in the graph.")
         for node in nodelist:
             row = []
             for other_node in nodelist:
@@ -151,12 +151,12 @@ class VarGraph:
         Args:
             subs_dict: Dictionary that contains the variables that you want to substitute and the values to substitute them. For example {"x": 3.0, "y":7.0}
         """
-        new__graph = VarGraph(directed=self.directed)
+        new_graph = VarGraph(directed=self.directed)
         for node in self._graph:
-            new__graph.add_node(node)
+            new_graph.add_node(node)
             for other_node, weight in self._graph[node].items():
-                new__graph.add_edge(node, other_node, weight.subs(subs_dict).evalf())
-        return new__graph
+                new_graph.add_edge(node, other_node, weight.subs(subs_dict).evalf())
+        return new_graph
 
     def get_symbolic_paths(self, source, target):
         """
@@ -173,9 +173,9 @@ class VarGraph:
         """
         # Node validation
         if source not in self._graph:
-            raise ValueError(f"Node '{source}' does not exist in the _graph.")
+            raise ValueError(f"Node '{source}' does not exist in the graph.")
         if target not in self._graph:
-            raise ValueError(f"Node '{target}' does not exist in the _graph.")
+            raise ValueError(f"Node '{target}' does not exist in the graph.")
 
         paths_found = []
 
