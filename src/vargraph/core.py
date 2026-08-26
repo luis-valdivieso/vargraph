@@ -43,6 +43,13 @@ class VarGraph:
             raise ValueError(f"Node {node} does not exist")
         else:
             return list(self._graph[node].keys())
+
+    def get_weight(self, u, v):
+        if u not in self._graph:
+            raise ValueError(f"Node {u} does not exist")
+        if v not in self._graph:
+            raise ValueError(f"Node {v} does not exist")
+        return self._graph[u].get(v)
         
     def get_adjacency_matrix(self, nodelist=None):
         
