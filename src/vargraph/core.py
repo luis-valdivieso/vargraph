@@ -35,6 +35,9 @@ class VarGraph:
         if not self.directed:
             self._graph[v][u] = sympified_weight
 
+    def get_nodes(self):
+        return list(self._graph.keys())
+    
     def get_adjacency_matrix(self, nodelist=None):
         
         if nodelist is None:
