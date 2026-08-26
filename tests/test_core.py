@@ -8,10 +8,10 @@ def test_vargraph_initialization():
     g_directed = VarGraph(directed=True)
 
     assert g_undirected.directed is False
-    assert g_undirected.graph == {}
+    assert g_undirected.get_nodes() == []
 
     assert g_directed.directed is True
-    assert g_directed.graph == {}
+    assert g_directed.get_edges() == []
 
 def test_add_node():
     g = VarGraph()
@@ -20,32 +20,32 @@ def test_add_node():
     g.add_node("B")
     g.add_node("A") # Adding a node again shouldn't be a problem
 
-    assert "A" in g.graph
-    assert "B" in g.graph
-    assert g.graph["A"] == {}
+    assert "A" in g.get_nodes()
+    assert "B" in g.get_nodes()
+    assert g.get_neighbors("A") == []
 
 def test_add_edge_directed():
     g = VarGraph(directed=True)
 
     g.add_edge("A", "B", "x + 2")
 
-    assert "A" in g.graph
-    assert "B" in g.graph
-    assert g.graph["A"]["B"] == sp.sympify("x+2")
-    assert isinstance(g.graph["A"]["B"], sp.Expr)
-    assert "A" not in g.graph["B"]  # B shouldn't be connected back to A
+    assert "A" in g.get_nodes()
+    assert "B" in g.get_nodes()
+    assert g.get_weight("A","B") == sp.sympify("x+2")
+    assert isinstance(g.get_weight("A","B"), sp.Expr)
+    assert "A" not in g.get_neighbors("B")  # B shouldn't be connected back to A
 
 def test_add_edge_undirected():
     g = VarGraph(directed=False)
 
     g.add_edge("A", "B", "x + 2")
 
-    assert "A" in g.graph
-    assert "B" in g.graph
-    assert g.graph["A"]["B"] == sp.sympify("x+2")
-    assert g.graph["B"]["A"] == sp.sympify("x+2")
-    assert isinstance(g.graph["B"]["A"], sp.Expr)
-    assert isinstance(g.graph["A"]["B"], sp.Expr)
+    assert "A" in g.get_nodes()
+    assert "B" in g.get_nodes()
+    assert g.get_weight("A","B") == sp.sympify("x+2")
+    assert g.get_weight("B","A") == sp.sympify("x+2")
+    assert isinstance(g.get_weight("A","B"), sp.Expr)
+    assert isinstance(g.get_weight("B","A"), sp.Expr)
 
 def test_free_symbols():
     g = VarGraph()
@@ -105,13 +105,19 @@ def test_evaluate_all_variables_substituted():
     subs_dict = {"x" : 5, "y": 1}
     substituted_graph = g.evaluate(subs_dict)
 
-    assert substituted_graph.graph == {
-        "A": {"B": sp.Float(1.0), "C": sp.Float(5.0)},
-        "B": {"C": sp.Float(7.0)},
-        "C": {},
-    }
+    assert set(substituted_graph.get_nodes()) == {"A", "B", "C"}
 
-    assert g.graph["B"]["C"] == sp.sympify("x + 2")
+    expected_edges = [
+        ("A", "B", sp.Float(1.0)),
+        ("A", "C", sp.Float(5.0)),
+        ("B", "C", sp.Float(7.0))
+    ]
+
+    assert set(substituted_graph.get_edges()) == set(expected_edges)
+    
+    assert substituted_graph.get_neighbors("C") == []
+
+    assert g.get_weight("B", "C") == sp.sympify("x + 2")
 
 def test_evaluate_one_variable_substituted():
     g = VarGraph(directed=True)
@@ -123,13 +129,18 @@ def test_evaluate_one_variable_substituted():
     subs_dict = {"x" : 5}
     substituted_graph = g.evaluate(subs_dict)
 
-    assert substituted_graph.graph == {
-        "A": {"B": sp.sympify("y"), "C": sp.Float(5.0)},
-        "B": {"C": sp.Float(7.0)},
-        "C": {},
-    }
+    assert set(substituted_graph.get_nodes()) == {"A", "B", "C"}
 
-    assert g.graph["B"]["C"] == sp.sympify("x + 2")
+    expected_edges = [
+        ("A", "B", sp.sympify("y")),
+        ("A", "C", sp.Float(5.0)),
+        ("B", "C", sp.Float(7.0))
+    ]
+    assert set(substituted_graph.get_edges()) == set(expected_edges)
+
+    assert substituted_graph.get_neighbors("C") == []
+
+    assert g.get_weight("B", "C") == sp.sympify("x + 2")
 
 def test_get_symbolic_paths():
     g = VarGraph(directed=True)
@@ -152,3 +163,5 @@ def test_get_symbolic_paths():
     g.add_edge("C", "A", "y")
 
     assert g.get_symbolic_paths("A", "C") == [(["A", "B", "C"], sp.sympify("2*x")) ]
+
+    assert g.get_symbolic_paths("A", "A") == [(["A"], sp.S.Zero)]
