@@ -5,12 +5,25 @@ build-backend = "hatchling.build"
 [project]
 name = "vargraph"
 version = "0.1.0"
+authors = [
+  { name="Luis Valdivieso", email="luisvaldivieso@correo.ugr.es"},
+]
 description = "A Python library for modeling graphs with symbolic edge weights"
 readme = "README.md"
 requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
 dependencies = [
     "sympy>=1.12",
 ]
+license ="MIT"
+license-files = ["LICENSE.md"]
+
+[project.urls]
+Homepage = "https://github.com/luis-valdivieso/vargraph"
+Issues = "https://github.com/luis-valdivieso/vargraph/issues"
 
 [project.optional-dependencies]
 dev = [
