@@ -1,3 +1,5 @@
+from collections import deque
+
 import sympy as sp
 
 
@@ -144,6 +146,41 @@ class VarGraph:
 
         return sp.Matrix(row_list), nodelist
 
+    def has_cycles(self):
+        """Detects cycles using Kanh's Algorithm  (Topological Sort)."""
+        # Initialize indegrees
+        in_degree = {node: 0 for node in self._graph}
+
+        # Compute indegrees
+        for u in self._graph:
+            for v in self._graph[u]:
+                in_degree[v] += 1
+
+        # Add to the queue nodes without dependencies (in-degree == 0)
+        q = deque([node for node in self._graph if in_degree[node] == 0])
+
+        visited = 0
+
+        # Process the queue
+        while q:
+            u = q.popleft()
+            visited += 1
+
+            # Decrease neighbors indegree
+            for v in self._graph[u]:
+                in_degree[v] -= 1
+                if in_degree[v] == 0:
+                    q.append(v)
+
+        # If we visited less than the total number of nodes, we found a cycle
+        return visited != len(self._graph)
+
+    def is_dag(self):
+        """
+        Returns true if the graph is directed and has no cycles
+        """
+        return self.directed and not self.has_cycles()
+    
     def evaluate(self, subs_dict):
         """
         Returns a graph with all the variables susbtituted in it

@@ -95,6 +95,28 @@ def test_get_adjacency_matrix_defined_order():
     assert matrix == sp.Matrix(expected_matrix)
     assert nodes == ["A","C"]
 
+def test_has_cycles_and_is_dag_with_acyclic_graph():
+    g = VarGraph(directed=True)
+    g.add_edge("FinderAgent", "ValidationAgent")
+    g.add_edge("ValidationAgent", "WriterAgent")
+    
+    assert g.has_cycles() is False
+    assert g.is_dag() is True
+
+def test_has_cycles_with_cyclic_graph():
+    g = VarGraph(directed=True)
+    g.add_edge("FinderAgent", "ValidationAgent")
+    g.add_edge("ValidationAgent", "FinderAgent")
+    
+    assert g.has_cycles() is True
+    assert g.is_dag() is False
+
+def test_is_dag_on_undirected_graph():
+    g = VarGraph(directed=False)
+    g.add_edge("AgentA", "AgentB")
+    
+    assert g.is_dag() is False
+
 def test_evaluate_all_variables_substituted():
     g = VarGraph(directed=True)
     g.add_edge("A", "B", "y")
