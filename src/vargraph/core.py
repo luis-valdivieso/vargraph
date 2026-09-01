@@ -1,5 +1,7 @@
-import sympy as sp
 from collections import deque
+
+import sympy as sp
+
 
 class VarGraph:
     """
