@@ -172,6 +172,12 @@ class VarGraph:
 
         # If we visited less than the total number of nodes, we found a cycle
         return visited != len(self._graph)
+
+    def is_dag(self):
+        """
+        Returns true if the graph is directed and has no cycles
+        """
+        return self.directed and not self.has_cycles()
     
     def evaluate(self, subs_dict):
         """
