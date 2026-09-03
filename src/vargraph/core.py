@@ -73,7 +73,7 @@ class VarGraph:
         
         # If the graph is not directed, we create the v-u connection
         if not self.directed:
-            self._graph[u][v] = {
+            self._graph[v][u] = {
                 'weight': sympified_weight, 
                 'condition': sympified_condition
             }
