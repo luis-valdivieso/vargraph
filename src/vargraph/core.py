@@ -31,6 +31,7 @@ class VarGraph:
         for neighbors in self._graph.values():
             for edge in neighbors.values():
                 symbols.update(edge["weight"].free_symbols)
+                symbols.update(edge["condition"].free_symbols)
                 
         return symbols
 
@@ -60,10 +61,7 @@ class VarGraph:
 
         sympified_weight = sp.sympify(weight)
 
-        if condition is None:
-            sympified_condition = sp.S.true
-        else:
-            sympified_condition = sp.sympify(condition)
+        sympified_condition = sp.sympify(condition)
 
         # Create u-v connection with sympy expression
         self._graph[u][v] = {
@@ -151,8 +149,8 @@ class VarGraph:
         """
         edges = []
         for u, neighbors in self._graph.items():
-            for v, weight in neighbors.items():
-                edges.append((u, v, weight))
+            for v in neighbors.keys():
+                edges.append((u, v, self.get_weight(u,v), self.get_edge_condition(u,v)))
         return edges
     
     def get_adjacency_matrix(self, nodelist=None):
@@ -229,8 +227,10 @@ class VarGraph:
         new_graph = VarGraph(directed=self.directed)
         for node in self._graph:
             new_graph.add_node(node)
-            for other_node, weight in self._graph[node].items():
-                new_graph.add_edge(node, other_node, weight.subs(subs_dict).evalf())
+            for other_node, edge in self._graph[node].items():
+                new_weight = edge.get("weight").subs(subs_dict).evalf()
+                new_cond = edge.get("condition").subs(subs_dict)
+                new_graph.add_edge(node, other_node, weight=new_weight, condition=new_cond)
         return new_graph
 
     def get_symbolic_paths(self, source, target):
@@ -262,9 +262,9 @@ class VarGraph:
             if current_node == target:
                 paths_found.append((list(current_path), sp.simplify(current_cost)))
             else:
-                for neighbour, weight in self._graph[current_node].items():
+                for neighbour in self._graph[current_node].keys():
                     if neighbour not in visited:
-                        dfs(neighbour, current_path, current_cost + weight, visited)
+                        dfs(neighbour, current_path, current_cost + self.get_weight(current_node, neighbour), visited)
             # Backtracking
             current_path.pop()
             visited.remove(current_node)
