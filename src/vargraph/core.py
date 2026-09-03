@@ -117,7 +117,24 @@ class VarGraph:
             raise ValueError(f"Node {u} does not exist")
         if v not in self._graph:
             raise ValueError(f"Node {v} does not exist")
-        return self._graph[u].get(v)
+        return self._graph[u].get(v)["weight"]
+
+    def get_edge_condition(self, u, v):
+        """
+        Returns the logic condition of the u-v edge
+
+        Args:
+            u (str): Origin of the edge
+            v (str): End of the edge 
+
+        Raises: 
+            ValueError if any of the nodes does not exists
+        """
+        if u not in self._graph:
+            raise ValueError(f"Node {u} does not exist")
+        if v not in self._graph:
+            raise ValueError(f"Node {v} does not exist")
+        return self._graph[u].get(v)['condition']
 
     def get_edges(self):
         """
