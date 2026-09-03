@@ -29,8 +29,8 @@ class VarGraph:
         """
         symbols = set()
         for neighbors in self._graph.values():
-            for weight in neighbors.values():
-                symbols.update(weight.free_symbols)
+            for edge in neighbors.values():
+                symbols.update(edge["weight"].free_symbols)
                 
         return symbols
 
