@@ -44,7 +44,7 @@ class VarGraph:
         if node not in self._graph:
             self._graph[node] = {}
 
-    def add_edge(self, u, v, weight=1):
+    def add_edge(self, u, v, weight=1, condition=None):
         """
         Adds an edge between u and v with a weight
         
@@ -52,18 +52,31 @@ class VarGraph:
             u (str): Origin of the edge
             v (str): End of the edge
             weight (optional): Weight of the edge (by default is 1). Should be a sympy convertible formula
+            condition: Logical constraint that represent when we can pass from u to v
         """
         # If the nodes are new, we initialize the internal dictionaries
         self.add_node(u)
         self.add_node(v)
 
         sympified_weight = sp.sympify(weight)
+
+        if condition is None:
+            sympified_condition = sp.S.true
+        else:
+            sympified_condition = sp.sympify(condition)
+
         # Create u-v connection with sympy expression
-        self._graph[u][v] = sympified_weight
+        self._graph[u][v] = {
+            'weight': sympified_weight, 
+            'condition': sympified_condition
+        }
         
         # If the graph is not directed, we create the v-u connection
         if not self.directed:
-            self._graph[v][u] = sympified_weight
+            self._graph[u][v] = {
+                'weight': sympified_weight, 
+                'condition': sympified_condition
+            }
 
     def get_nodes(self):
         """
