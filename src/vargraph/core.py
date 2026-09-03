@@ -156,7 +156,7 @@ class VarGraph:
         """
         edges = []
         for u, neighbors in self._graph.items():
-            for v in neighbors.keys():
+            for v in neighbors:
                 edges.append((u, v, self.get_weight(u,v), self.get_edge_condition(u,v)))
         return edges
     
@@ -269,7 +269,7 @@ class VarGraph:
             if current_node == target:
                 paths_found.append((list(current_path), sp.simplify(current_cost)))
             else:
-                for neighbour in self._graph[current_node].keys():
+                for neighbour in self._graph[current_node]:
                     if neighbour not in visited:
                         dfs(neighbour, current_path, current_cost + self.get_weight(current_node, neighbour), visited)
             # Backtracking
@@ -279,3 +279,5 @@ class VarGraph:
         dfs(source, [], sp.S.Zero, set())
 
         return paths_found
+
+    
