@@ -145,49 +145,52 @@ def test_is_dag_on_undirected_graph():
 
 def test_evaluate_all_variables_substituted():
     g = VarGraph(directed=True)
-    g.add_edge("A", "B", "y")
-    g.add_edge("B", "C", "x + 2")
+    # Añadimos variables lógicas (z, w) a las condiciones
+    g.add_edge("A", "B", "y", "z > 5")
+    g.add_edge("B", "C", "x + 2", "Eq(w, 1)")
     g.add_node("C")
-    g.add_edge("A", "C", 5)
+    g.add_edge("A", "C", 5) # Condición por defecto: True
 
-    subs_dict = {"x" : 5, "y": 1}
+    # Sustituimos todo, haciendo que las condiciones se cumplan
+    subs_dict = {"x" : 5, "y": 1, "z": 10, "w": 1}
     substituted_graph = g.evaluate(subs_dict)
 
     assert set(substituted_graph.get_nodes()) == {"A", "B", "C"}
 
     expected_edges = [
-        ("A", "B", sp.Float(1.0), sp.S.true),
+        ("A", "B", sp.Float(1.0), sp.S.true),  # 10 > 5 se evalúa a True
         ("A", "C", sp.Float(5.0), sp.S.true),
-        ("B", "C", sp.Float(7.0), sp.S.true)
+        ("B", "C", sp.Float(7.0), sp.S.true)   # 1 == 1 se evalúa a True
     ]
 
     assert set(substituted_graph.get_edges()) == set(expected_edges)
-    
     assert substituted_graph.get_neighbors("C") == []
-
+    
+    # Comprobamos que el grafo original no ha mutado
     assert g.get_weight("B", "C") == sp.sympify("x + 2")
+    assert g.get_edge_condition("A", "B") == sp.sympify("z > 5")
+
 
 def test_evaluate_one_variable_substituted():
     g = VarGraph(directed=True)
-    g.add_edge("A", "B", "y")
+    g.add_edge("A", "B", "y", "z > 5")
     g.add_edge("B", "C", "x + 2")
     g.add_node("C")
     g.add_edge("A", "C", 5)
 
+    # Solo sustituimos 'x'. Las variables 'y' (peso) y 'z' (condición) deben quedar intactas.
     subs_dict = {"x" : 5}
     substituted_graph = g.evaluate(subs_dict)
 
     assert set(substituted_graph.get_nodes()) == {"A", "B", "C"}
 
     expected_edges = [
-        ("A", "B", sp.sympify("y"), sp.S.true),
+        ("A", "B", sp.sympify("y"), sp.sympify("z > 5")), # Condición intacta
         ("A", "C", sp.Float(5.0), sp.S.true),
         ("B", "C", sp.Float(7.0), sp.S.true)
     ]
     assert set(substituted_graph.get_edges()) == set(expected_edges)
-
     assert substituted_graph.get_neighbors("C") == []
-
     assert g.get_weight("B", "C") == sp.sympify("x + 2")
 
 def test_get_symbolic_paths():

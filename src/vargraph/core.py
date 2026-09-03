@@ -65,6 +65,8 @@ class VarGraph:
             sympified_condition = sp.S.true
         else:
             sympified_condition = sp.sympify(condition)
+            if isinstance(sympified_condition, bool):
+                sympified_condition = sp.S.true if sympified_condition else sp.S.false
 
         # Create u-v connection with sympy expression
         self._graph[u][v] = {
