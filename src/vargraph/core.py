@@ -117,7 +117,12 @@ class VarGraph:
             raise ValueError(f"Node {u} does not exist")
         if v not in self._graph:
             raise ValueError(f"Node {v} does not exist")
-        return self._graph[u].get(v)["weight"]
+        
+        edge_data = self._graph[u].get(v)
+        if edge_data is None:
+            return None
+            
+        return edge_data["weight"]
 
     def get_edge_condition(self, u, v):
         """
@@ -134,7 +139,7 @@ class VarGraph:
             raise ValueError(f"Node {u} does not exist")
         if v not in self._graph:
             raise ValueError(f"Node {v} does not exist")
-        return self._graph[u].get(v)['condition']
+        return self._graph[u].get(v).get('condition')
 
     def get_edges(self):
         """
@@ -170,7 +175,10 @@ class VarGraph:
         for node in nodelist:
             row = []
             for other_node in nodelist:
-                weight = self._graph[node].get(other_node, sp.S.Zero)
+                if self.get_weight(node, other_node) is None:
+                    weight = sp.S.Zero
+                else:
+                    weight = self.get_weight(node, other_node)
                 row.append(weight)
             row_list.append(row)
 
