@@ -61,7 +61,10 @@ class VarGraph:
 
         sympified_weight = sp.sympify(weight)
 
-        sympified_condition = sp.sympify(condition)
+        if condition is None:
+            sympified_condition = sp.S.true
+        else:
+            sympified_condition = sp.sympify(condition)
 
         # Create u-v connection with sympy expression
         self._graph[u][v] = {
@@ -137,7 +140,11 @@ class VarGraph:
             raise ValueError(f"Node {u} does not exist")
         if v not in self._graph:
             raise ValueError(f"Node {v} does not exist")
-        return self._graph[u].get(v).get('condition')
+        edge_data = self._graph[u].get(v)
+        if edge_data is None:
+            return None
+            
+        return edge_data["condition"]
 
     def get_edges(self):
         """
