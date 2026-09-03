@@ -47,6 +47,32 @@ def test_add_edge_undirected():
     assert isinstance(g.get_weight("A","B"), sp.Expr)
     assert isinstance(g.get_weight("B","A"), sp.Expr)
 
+def test_add_edge_condition_directed():
+    g = VarGraph(directed=True)
+    
+    g.add_edge("A", "B", "x + 2", "x>2")
+
+    assert "A" in g.get_nodes()
+    assert "B" in g.get_nodes()
+    assert g.get_weight("A","B") == sp.sympify("x+2")
+    assert isinstance(g.get_weight("A","B"), sp.Expr)
+    assert "A" not in g.get_neighbors("B")  # B shouldn't be connected back to A
+    assert g.get_edge_condition("A", "B") == sp.sympify("x>2")
+
+def test_add_edge_condition_undirected():
+    g = VarGraph(directed=False)
+    
+    g.add_edge("A", "B", "x + 2", "x>2")
+
+    assert "A" in g.get_nodes()
+    assert "B" in g.get_nodes()
+    assert g.get_weight("A","B") == sp.sympify("x+2")
+    assert g.get_weight("B","A") == sp.sympify("x+2")
+    assert isinstance(g.get_weight("A","B"), sp.Expr)
+    assert isinstance(g.get_weight("B","A"), sp.Expr)
+    assert g.get_edge_condition("A", "B") == sp.sympify("x>2")
+    assert g.get_edge_condition("B", "A") == sp.sympify("x>2")
+
 def test_free_symbols():
     g = VarGraph()
     g.add_edge("A", "B", "x + 2")
@@ -130,9 +156,9 @@ def test_evaluate_all_variables_substituted():
     assert set(substituted_graph.get_nodes()) == {"A", "B", "C"}
 
     expected_edges = [
-        ("A", "B", sp.Float(1.0)),
-        ("A", "C", sp.Float(5.0)),
-        ("B", "C", sp.Float(7.0))
+        ("A", "B", sp.Float(1.0), sp.S.true),
+        ("A", "C", sp.Float(5.0), sp.S.true),
+        ("B", "C", sp.Float(7.0), sp.S.true)
     ]
 
     assert set(substituted_graph.get_edges()) == set(expected_edges)
@@ -154,9 +180,9 @@ def test_evaluate_one_variable_substituted():
     assert set(substituted_graph.get_nodes()) == {"A", "B", "C"}
 
     expected_edges = [
-        ("A", "B", sp.sympify("y")),
-        ("A", "C", sp.Float(5.0)),
-        ("B", "C", sp.Float(7.0))
+        ("A", "B", sp.sympify("y"), sp.S.true),
+        ("A", "C", sp.Float(5.0), sp.S.true),
+        ("B", "C", sp.Float(7.0), sp.S.true)
     ]
     assert set(substituted_graph.get_edges()) == set(expected_edges)
 
