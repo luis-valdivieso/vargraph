@@ -76,9 +76,9 @@ def test_add_edge_condition_undirected():
 def test_free_symbols():
     g = VarGraph()
     g.add_edge("A", "B", "x + 2")
-    g.add_edge ("B", "C", "y**2 + x + 1")
-
-    expected_symbols = {sp.Symbol("x"), sp.Symbol("y")}
+    g.add_edge("B", "C", "y**2 + x + 1")
+    g.add_edge("C", "A", 4.0, "api_cost > 2")
+    expected_symbols = {sp.Symbol("x"), sp.Symbol("y"), sp.Symbol("api_cost")}
 
     assert g.free_symbols == expected_symbols
 
@@ -216,3 +216,42 @@ def test_get_symbolic_paths():
     assert g.get_symbolic_paths("A", "C") == [(["A", "B", "C"], sp.sympify("2*x")) ]
 
     assert g.get_symbolic_paths("A", "A") == [(["A"], sp.S.Zero)]
+
+def test_get_valid_subgraph():
+    g = VarGraph(directed=True)
+
+    # Add edge with conditions
+    g.add_edge("A", "B", weight="api_cost", condition="conf > 0.8")
+    g.add_edge("A", "C", weight="penalty", condition="conf <= 0.8")
+    
+    # Edge with no condition
+    g.add_edge("B", "D", weight="gen_cost")
+    
+    # Add an isolated node to ensure topology is preserved
+    g.add_node("E")
+
+    # First scenario
+    context_high = {"conf": 0.9}
+    valid_g_high = g.get_valid_subgraph(context_high)
+    
+    assert set(valid_g_high.get_nodes()) == {"A", "B", "C", "D", "E"}
+    
+    # A C path is blocked but B C path is not 
+    expected_edges_high = [
+        ("A", "B", sp.sympify("api_cost"), sp.S.true),
+        ("B", "D", sp.sympify("gen_cost"), sp.S.true)
+    ]
+    assert set(valid_g_high.get_edges()) == set(expected_edges_high)
+    assert "C" not in valid_g_high.get_neighbors("A")
+
+    # Second Scenario
+    context_low = {"conf": 0.4}
+    valid_g_low = g.get_valid_subgraph(context_low)
+    
+    # Now A C route is valid but A B is not
+    expected_edges_low = [
+        ("A", "C", sp.sympify("penalty"), sp.S.true),
+        ("B", "D", sp.sympify("gen_cost"), sp.S.true)
+    ]
+    assert set(valid_g_low.get_edges()) == set(expected_edges_low)
+    assert "B" not in valid_g_low.get_neighbors("A")
