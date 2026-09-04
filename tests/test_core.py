@@ -1,3 +1,4 @@
+import pytest
 import sympy as sp
 
 from vargraph import VarGraph
@@ -23,6 +24,14 @@ def test_add_node():
     assert "A" in g.get_nodes()
     assert "B" in g.get_nodes()
     assert g.get_neighbors("A") == []
+
+def test_get_weight_raises_error_for_missing_nodes():
+    g = VarGraph()
+    g.add_node("A")
+    
+    # We expect a ValueError because "B" was never added to the graph
+    with pytest.raises(ValueError):
+        g.get_weight("A", "B")
 
 def test_add_edge_directed():
     g = VarGraph(directed=True)
@@ -217,6 +226,14 @@ def test_get_symbolic_paths():
 
     assert g.get_symbolic_paths("A", "A") == [(["A"], sp.S.Zero)]
 
+def test_pathfinding_raises_error_for_missing_source():
+    g = VarGraph(directed=True)
+    g.add_edge("A", "B", "x")
+    
+    # The test will only pass if a ValueError is raised AND the message contains "GhostNode"
+    with pytest.raises(ValueError, match="Node 'GhostNode' does not exist"):
+        g.get_symbolic_paths("GhostNode", "B")
+
 def test_get_valid_subgraph():
     g = VarGraph(directed=True)
 
@@ -236,7 +253,7 @@ def test_get_valid_subgraph():
     
     assert set(valid_g_high.get_nodes()) == {"A", "B", "C", "D", "E"}
     
-    # A C path is blocked but B C path is not 
+    # A C path is blocked but B D path is not 
     expected_edges_high = [
         ("A", "B", sp.sympify("api_cost"), sp.S.true),
         ("B", "D", sp.sympify("gen_cost"), sp.S.true)
@@ -255,3 +272,13 @@ def test_get_valid_subgraph():
     ]
     assert set(valid_g_low.get_edges()) == set(expected_edges_low)
     assert "B" not in valid_g_low.get_neighbors("A")
+
+def test_get_valid_subgraph_missing_context_drops_edge():
+    g = VarGraph(directed=True)
+    g.add_edge("A", "B", condition="conf > 0.8")
+    
+    # We pass an empty context. SymPy evaluates "conf > 0.8" as just "conf > 0.8", 
+    # which is not sp.S.true, so the edge should be strictly dropped.
+    valid_g = g.get_valid_subgraph({})
+    
+    assert "B" not in valid_g.get_neighbors("A")
