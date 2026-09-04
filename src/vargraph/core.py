@@ -282,4 +282,18 @@ class VarGraph:
 
         return paths_found
 
-    
+    def get_valid_subgraph(self, context_dict):
+        """
+        Returns a graph which contains only the edges where the condition evaluates to True given the context dictionary
+
+        Args:
+            subs_dict: Dictionary that contains the variables that you want to substitute and the values to substitute them. For example {"x": 3.0, "y":7.0}
+        """
+        new_graph = VarGraph(directed=self.directed)
+        for node in self.get_nodes():
+            new_graph.add_node(node)
+            for other_node, edge in self._graph[node].items():
+                new_cond = edge.get("condition").subs(context_dict)
+                if new_cond == sp.S.true:
+                    new_graph.add_edge(node, other_node, weight=edge.get("weight"), condition=new_cond)
+        return new_graph
