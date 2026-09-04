@@ -29,8 +29,9 @@ class VarGraph:
         """
         symbols = set()
         for neighbors in self._graph.values():
-            for weight in neighbors.values():
-                symbols.update(weight.free_symbols)
+            for edge in neighbors.values():
+                symbols.update(edge["weight"].free_symbols)
+                symbols.update(edge["condition"].free_symbols)
                 
         return symbols
 
@@ -44,7 +45,7 @@ class VarGraph:
         if node not in self._graph:
             self._graph[node] = {}
 
-    def add_edge(self, u, v, weight=1):
+    def add_edge(self, u, v, weight=1, condition=None):
         """
         Adds an edge between u and v with a weight
         
@@ -52,18 +53,33 @@ class VarGraph:
             u (str): Origin of the edge
             v (str): End of the edge
             weight (optional): Weight of the edge (by default is 1). Should be a sympy convertible formula
+            condition: Logical constraint that represent when we can pass from u to v
         """
         # If the nodes are new, we initialize the internal dictionaries
         self.add_node(u)
         self.add_node(v)
 
         sympified_weight = sp.sympify(weight)
+
+        if condition is None:
+            sympified_condition = sp.S.true
+        else:
+            sympified_condition = sp.sympify(condition)
+            if isinstance(sympified_condition, bool):
+                sympified_condition = sp.S.true if sympified_condition else sp.S.false
+
         # Create u-v connection with sympy expression
-        self._graph[u][v] = sympified_weight
+        self._graph[u][v] = {
+            'weight': sympified_weight, 
+            'condition': sympified_condition
+        }
         
         # If the graph is not directed, we create the v-u connection
         if not self.directed:
-            self._graph[v][u] = sympified_weight
+            self._graph[v][u] = {
+                'weight': sympified_weight, 
+                'condition': sympified_condition
+            }
 
     def get_nodes(self):
         """
@@ -104,7 +120,33 @@ class VarGraph:
             raise ValueError(f"Node {u} does not exist")
         if v not in self._graph:
             raise ValueError(f"Node {v} does not exist")
-        return self._graph[u].get(v)
+        
+        edge_data = self._graph[u].get(v)
+        if edge_data is None:
+            return None
+            
+        return edge_data["weight"]
+
+    def get_edge_condition(self, u, v):
+        """
+        Returns the logic condition of the u-v edge
+
+        Args:
+            u (str): Origin of the edge
+            v (str): End of the edge 
+
+        Raises: 
+            ValueError if any of the nodes does not exists
+        """
+        if u not in self._graph:
+            raise ValueError(f"Node {u} does not exist")
+        if v not in self._graph:
+            raise ValueError(f"Node {v} does not exist")
+        edge_data = self._graph[u].get(v)
+        if edge_data is None:
+            return None
+            
+        return edge_data["condition"]
 
     def get_edges(self):
         """
@@ -116,8 +158,8 @@ class VarGraph:
         """
         edges = []
         for u, neighbors in self._graph.items():
-            for v, weight in neighbors.items():
-                edges.append((u, v, weight))
+            for v in neighbors:
+                edges.append((u, v, self.get_weight(u,v), self.get_edge_condition(u,v)))
         return edges
     
     def get_adjacency_matrix(self, nodelist=None):
@@ -140,7 +182,10 @@ class VarGraph:
         for node in nodelist:
             row = []
             for other_node in nodelist:
-                weight = self._graph[node].get(other_node, sp.S.Zero)
+                if self.get_weight(node, other_node) is None:
+                    weight = sp.S.Zero
+                else:
+                    weight = self.get_weight(node, other_node)
                 row.append(weight)
             row_list.append(row)
 
@@ -191,8 +236,10 @@ class VarGraph:
         new_graph = VarGraph(directed=self.directed)
         for node in self._graph:
             new_graph.add_node(node)
-            for other_node, weight in self._graph[node].items():
-                new_graph.add_edge(node, other_node, weight.subs(subs_dict).evalf())
+            for other_node, edge in self._graph[node].items():
+                new_weight = edge.get("weight").subs(subs_dict).evalf()
+                new_cond = edge.get("condition").subs(subs_dict)
+                new_graph.add_edge(node, other_node, weight=new_weight, condition=new_cond)
         return new_graph
 
     def get_symbolic_paths(self, source, target):
@@ -224,9 +271,9 @@ class VarGraph:
             if current_node == target:
                 paths_found.append((list(current_path), sp.simplify(current_cost)))
             else:
-                for neighbour, weight in self._graph[current_node].items():
+                for neighbour in self._graph[current_node]:
                     if neighbour not in visited:
-                        dfs(neighbour, current_path, current_cost + weight, visited)
+                        dfs(neighbour, current_path, current_cost + self.get_weight(current_node, neighbour), visited)
             # Backtracking
             current_path.pop()
             visited.remove(current_node)
@@ -234,3 +281,19 @@ class VarGraph:
         dfs(source, [], sp.S.Zero, set())
 
         return paths_found
+
+    def get_valid_subgraph(self, context_dict):
+        """
+        Returns a graph which contains only the edges where the condition evaluates to True given the context dictionary
+
+        Args:
+            subs_dict: Dictionary that contains the variables that you want to substitute and the values to substitute them. For example {"x": 3.0, "y":7.0}
+        """
+        new_graph = VarGraph(directed=self.directed)
+        for node in self.get_nodes():
+            new_graph.add_node(node)
+            for other_node, edge in self._graph[node].items():
+                new_cond = edge.get("condition").subs(context_dict)
+                if new_cond == sp.S.true:
+                    new_graph.add_edge(node, other_node, weight=edge.get("weight"), condition=new_cond)
+        return new_graph
