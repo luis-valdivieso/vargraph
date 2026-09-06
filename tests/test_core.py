@@ -282,3 +282,56 @@ def test_get_valid_subgraph_missing_context_drops_edge():
     valid_g = g.get_valid_subgraph({})
     
     assert "B" not in valid_g.get_neighbors("A")
+
+def test_get_bottleneck_linear():
+    g = VarGraph(directed=True)
+    g.add_edge("A", "B", "2*x")
+    g.add_edge("B", "C", "y + 5")
+    
+    path = ["A", "B", "C"]
+    
+    # We pass 'z' to ensure it gracefully ignores unused variables
+    subs_dict = {"x": 10, "y": 2, "z": 999} 
+    
+    bottlenecks = g.get_bottleneck(path, subs_dict)
+    
+    expected_bottlenecks = [
+        (sp.sympify("2*x"), 20.0),
+        (sp.sympify(5), 5.0),
+        (sp.sympify("y"), 2.0)
+    ]
+    
+    assert bottlenecks == expected_bottlenecks
+
+def test_get_bottleneck_nonlinear():
+    g = VarGraph(directed=True)
+    g.add_edge("A", "B", "(x + y) * z")
+    
+    path = ["A", "B"]
+    subs_dict = {"x": 2, "y": 10, "z": 5}
+    
+    bottlenecks = g.get_bottleneck(path, subs_dict)
+    
+    expected_bottlenecks = [
+        (sp.sympify("y*z"), 50.0),
+        (sp.sympify("x*z"), 10.0)
+    ]
+    
+    assert bottlenecks == expected_bottlenecks
+
+def test_get_bottleneck_empty_or_single_node():
+    g = VarGraph(directed=True)
+    g.add_node("A")
+    
+    assert g.get_bottleneck(["A"], {"x": 10}) == []
+    assert g.get_bottleneck([], {"x": 10}) == []
+
+def test_get_bottleneck_missing_context_raises_error():
+    g = VarGraph(directed=True)
+    g.add_edge("A", "B", "x + y")
+    
+    path = ["A", "B"]
+    subs_dict = {"x": 10} # 'y' is missing
+    
+    with pytest.raises(ValueError, match="Missing numerical values for symbols"):
+        g.get_bottleneck(path, subs_dict)
