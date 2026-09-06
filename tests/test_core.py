@@ -318,3 +318,20 @@ def test_get_bottleneck_nonlinear():
     ]
     
     assert bottlenecks == expected_bottlenecks
+
+def test_get_bottleneck_empty_or_single_node():
+    g = VarGraph(directed=True)
+    g.add_node("A")
+    
+    assert g.get_bottleneck(["A"], {"x": 10}) == []
+    assert g.get_bottleneck([], {"x": 10}) == []
+
+def test_get_bottleneck_missing_context_raises_error():
+    g = VarGraph(directed=True)
+    g.add_edge("A", "B", "x + y")
+    
+    path = ["A", "B"]
+    subs_dict = {"x": 10} # 'y' is missing
+    
+    with pytest.raises(ValueError, match="Missing numerical values for symbols"):
+        g.get_bottleneck(path, subs_dict)
