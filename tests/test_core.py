@@ -302,3 +302,19 @@ def test_get_bottleneck_linear():
     ]
     
     assert bottlenecks == expected_bottlenecks
+
+def test_get_bottleneck_nonlinear():
+    g = VarGraph(directed=True)
+    g.add_edge("A", "B", "(x + y) * z")
+    
+    path = ["A", "B"]
+    subs_dict = {"x": 2, "y": 10, "z": 5}
+    
+    bottlenecks = g.get_bottleneck(path, subs_dict)
+    
+    expected_bottlenecks = [
+        (sp.sympify("y*z"), 50.0),
+        (sp.sympify("x*z"), 10.0)
+    ]
+    
+    assert bottlenecks == expected_bottlenecks
