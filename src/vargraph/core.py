@@ -297,3 +297,45 @@ class VarGraph:
                 if new_cond == sp.S.true:
                     new_graph.add_edge(node, other_node, weight=edge.get("weight"), condition=new_cond)
         return new_graph
+
+    def get_bottleneck(self, path, subs_dict):
+        """
+        Returns a sorted structure containing the absolute numerical contribution of each algebraic variable to the total path cost.
+
+        Args:
+            path: Node list that represents a particular path in the graph
+            subs_dict: Dictionary that contains the variables that you want to substitute and the values to substitute them. For example {"x": 3.0, "y":7.0}
+        Return:
+            term_contributions: A list that contains the contribution of each variable to the total cost
+        """
+        # A route with only one node does not have any transition cost
+        if len(path) < 2:
+            return [] 
+        
+        total_path_cost = sp.S.Zero
+        for start, end in zip(path[:-1], path[1:]):
+            weight = self.get_weight(start, end)
+            total_path_cost+=weight
+        
+        expanded_cost = sp.expand(total_path_cost)
+
+        # Extract individual additive terms
+        terms = expanded_cost.as_ordered_terms()
+
+        term_contributions = []
+        for term in terms:
+            # Substitute variables and evaluate to a float
+            substituted_term = term.subs(subs_dict).evalf()
+            try:
+                # We try to convert it to float
+                evaluated_value = float(substituted_term)
+            except TypeError:
+                missing_symbols = substituted_term.free_symbols
+                raise ValueError(f"Missing numerical values for symbols: {missing_symbols} in term '{term}'")
+            
+            term_contributions.append((term, evaluated_value))
+
+        # Sort the terms by their numerical contribution in descending order
+        term_contributions.sort(key=lambda x: x[1], reverse=True)
+
+        return term_contributions
