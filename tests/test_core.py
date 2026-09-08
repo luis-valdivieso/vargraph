@@ -361,6 +361,5 @@ def test_to_networkx_missing_dependency():
     g = VarGraph()
     
     # We mock sys.modules to simulate that networkx is not installed
-    with patch.dict('sys.modules', {'networkx': None}):
-        with pytest.raises(ImportError, match="NetworkX is required to use this method"):
-            g.to_networkx()
+    with patch.dict('sys.modules', {'networkx': None}), pytest.raises(ImportError, match="NetworkX is required to use this method"):
+        g.to_networkx()
