@@ -1,7 +1,10 @@
+
 import pytest
 import sympy as sp
+import networkx as nx
 
 from vargraph import VarGraph
+from unittest.mock import patch
 
 
 def test_vargraph_initialization():
@@ -335,3 +338,28 @@ def test_get_bottleneck_missing_context_raises_error():
     
     with pytest.raises(ValueError, match="Missing numerical values for symbols"):
         g.get_bottleneck(path, subs_dict)
+
+def test_to_networkx_export():
+    g = VarGraph(directed=True)
+    g.add_edge("A", "B", weight="cost_1", condition="conf > 0.5")
+    g.add_node("C") # Isolated node
+
+    nx_g = g.to_networkx()
+
+    assert isinstance(nx_g, nx.DiGraph)
+
+    assert set(nx_g.nodes()) == {"A", "B", "C"}
+
+    assert nx_g.has_edge("A", "B")
+    
+    edge_data = nx_g.get_edge_data("A", "B")
+    assert edge_data["weight"] == sp.sympify("cost_1")
+    assert edge_data["condition"] == sp.sympify("conf > 0.5")
+
+def test_to_networkx_missing_dependency():
+    g = VarGraph()
+    
+    # We mock sys.modules to simulate that networkx is not installed
+    with patch.dict('sys.modules', {'networkx': None}):
+        with pytest.raises(ImportError, match="NetworkX is required to use this method"):
+            g.to_networkx()
