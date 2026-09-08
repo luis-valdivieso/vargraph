@@ -339,3 +339,35 @@ class VarGraph:
         term_contributions.sort(key=lambda x: x[1], reverse=True)
 
         return term_contributions
+
+    def to_networkx(self):
+        """
+        Exports the VarGraph to a NetworkX graph object.
+        Nodes, symbolic weights, and conditions are transferred.
+        
+        Returns:
+            nx.Graph or nx.DiGraph: The equivalent NetworkX graph, depending on wether the graph is directed or undirected.
+            
+        Raises:
+            ImportError: If the networkx library is not installed.
+        """
+        try:
+            import networkx as nx
+        except ImportError:
+            raise ImportError(
+                "NetworkX is required to use this method. "
+                "Please install it using pip install networkx"
+            )
+
+        if self.directed:
+            nx_graph = nx.DiGraph()
+        else:
+            nx_graph = nx.Graph()
+
+        for node in self.get_nodes():
+            nx_graph.add_node(node)
+
+        for u, v, weight, condition in self.get_edges():
+            nx_graph.add_edge(u, v, weight=weight, condition=condition)
+
+        return nx_graph
