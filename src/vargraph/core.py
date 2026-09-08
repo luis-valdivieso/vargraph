@@ -353,7 +353,7 @@ class VarGraph:
         """
         try:
             import networkx as nx
-        except:
+        except ImportError:
             raise ImportError(
                 "NetworkX is required to use this method. "
                 "Please install it using pip install networkx"
