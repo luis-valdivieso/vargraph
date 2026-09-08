@@ -1,10 +1,11 @@
 
+from unittest.mock import patch
+
+import networkx as nx
 import pytest
 import sympy as sp
-import networkx as nx
 
 from vargraph import VarGraph
-from unittest.mock import patch
 
 
 def test_vargraph_initialization():
