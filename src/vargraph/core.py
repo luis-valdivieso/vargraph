@@ -389,7 +389,7 @@ class VarGraph:
                 "Please install them using: pip install networkx matplotlib"
             )
         nx_g=self.to_networkx()
-        pos = nx.spring_layout(nx_g, seed=42)
+        pos = nx.spring_layout(nx_g, seed=42, weight=None)
 
         plt.figure(figsize=(10,6))
 
