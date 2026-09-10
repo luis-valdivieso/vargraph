@@ -1,11 +1,10 @@
 
 from unittest.mock import patch
 
+import matplotlib.pyplot as plt
 import networkx as nx
 import pytest
 import sympy as sp
-import matplotlib.pyplot as plt
-
 
 from vargraph import VarGraph
 
