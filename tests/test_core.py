@@ -4,6 +4,8 @@ from unittest.mock import patch
 import networkx as nx
 import pytest
 import sympy as sp
+import matplotlib.pyplot as plt
+
 
 from vargraph import VarGraph
 
@@ -363,3 +365,26 @@ def test_to_networkx_missing_dependency():
     # We mock sys.modules to simulate that networkx is not installed
     with patch.dict('sys.modules', {'networkx': None}), pytest.raises(ImportError, match="NetworkX is required to use this method"):
         g.to_networkx()
+
+def test_draw_execution_trace_success():
+    g = VarGraph(directed=True)
+    g.add_edge("Router", "AgentA", weight="cost_a", condition="conf > 0.8")
+    g.add_edge("Router", "AgentB", weight="cost_b", condition="quality > 0.9")
+    g.add_edge("Router", "Fallback", weight="cost_fallback")
+    
+    # We pass TWO failed edges in a list
+    broken_routes = [("Router", "AgentA"), ("Router", "AgentB")]
+    successful_route = ["Router", "Fallback"]
+    
+    fig = g.draw_execution_trace(path=successful_route, failed_edges=broken_routes)
+    
+    assert fig is not None
+    assert fig.__class__.__name__ == "Figure"
+    plt.close(fig)
+    
+def test_draw_execution_trace_missing_dependencies():
+    g = VarGraph()
+    
+    # We simulate that matplotlib is not installed
+    with patch.dict('sys.modules', {'matplotlib.pyplot': None}), pytest.raises(ImportError, match="Both 'networkx' and 'matplotlib' are required"):
+        g.draw_execution_trace()
