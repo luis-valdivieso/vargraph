@@ -371,3 +371,76 @@ class VarGraph:
             nx_graph.add_edge(u, v, weight=weight, condition=condition)
 
         return nx_graph
+
+    def draw_execution_trace(self, path=None, failed_edges=None):
+        """
+        Visualizes the workflow, highlighting a successful path and/or failed topological guardrails.
+        
+        Args:
+            path (list, optional): A list of nodes representing the successful route.
+            failed_edges (list of tuples, optional): A list of (u, v) tuples representing blocked edges.
+        """
+        try:
+            import networkx as nx
+            import matplotlib.pyplot as plt
+        except ImportError:
+            raise ImportError(
+                "Both 'networkx' and 'matplotlib' are required for visualization. "
+                "Please install them using: pip install networkx matplotlib"
+            )
+        nx_g=self.to_networkx()
+        pos = nx.spring_layout(nx_g, seed=42)
+
+        plt.figure(figsize=(10,6))
+
+        # Draw base topology
+        nx.draw_networkx_nodes(nx_g, pos, node_color="#E5E7EB", node_size=2000, edgecolors="#8A93A2")
+        nx.draw_networkx_labels(nx_g, pos, font_size=10, font_weight="bold")
+        nx.draw_networkx_edges(nx_g, pos, edge_color="#D1D5DB", arrows=self.directed, width=1.5)
+
+        # Draw success route
+        if path and len(path) >= 2:
+            path_edges = list(zip(path[:-1], path[1:]))
+            nx.draw_networkx_edges(
+                nx_g, pos, 
+                edgelist=path_edges, 
+                edge_color="#1EB910", 
+                width=3.5, 
+                arrows=self.directed
+            )
+
+        # Draw failed edges
+        if failed_edges:
+            # If it is only one tuple, we convert it to a list
+            if isinstance(failed_edges, tuple) and len(failed_edges) == 2 and not isinstance(failed_edges[0], tuple):
+                failed_edges = [failed_edges]
+
+            nx.draw_networkx_edges(
+                nx_g, pos, 
+                edgelist=failed_edges, 
+                edge_color="#EF4444", 
+                width=3.5, 
+                style="dashed", 
+                arrows=self.directed
+            )
+
+        # Format labels
+        import sympy as sp
+        edge_labels = {}
+        for u, v, data in nx_g.edges(data=True):
+            weight = data.get("weight", "")
+            condition = data.get("condition", "")
+            
+            if condition == sp.S.true:
+                label = f"{weight}"
+            else:
+                label = f"{weight}\n[{condition}]"
+            edge_labels[(u, v)] = label
+
+        nx.draw_networkx_edge_labels(nx_g, pos, edge_labels=edge_labels, font_size=8, font_color="#374151")
+
+        plt.title("VarGraph Execution Trace", fontweight="bold", fontsize=14)
+        plt.axis("off")
+        
+        plt.show(block=False)
+        return plt.gcf()
