@@ -387,3 +387,41 @@ def test_draw_execution_trace_missing_dependencies():
     # We simulate that matplotlib is not installed
     with patch.dict('sys.modules', {'matplotlib.pyplot': None}), pytest.raises(ImportError, match="Both 'networkx' and 'matplotlib' are required"):
         g.draw_execution_trace()
+
+def test_json_serialization_deserialization(tmp_path):
+    """
+    Verifies that a graph saved to JSON and immediately loaded retains the exact same topology, weights, directed properties, and conditions.
+    """
+    original_graph = VarGraph(directed=True)
+
+    x= sp.symbols('x')
+
+    # Add standard edges
+    original_graph.add_edge("A", "B", weight="x+2", condition=sp.Eq(x,1))
+    original_graph.add_edge("B", "C", weight="y * 3")
+
+    # Isolated node for edge case testing
+    original_graph.add_node("Isolated_Node")
+
+    filepath = tmp_path / "test_graph.json"
+
+    original_graph.save_to_json(filepath)
+    loaded_graph = VarGraph.load_from_json(filepath)
+
+    # Check directed property
+    assert loaded_graph.directed == original_graph.directed
+
+    # Check that the nodes are identical
+    assert set(loaded_graph.get_nodes()) == set(original_graph.get_nodes())
+
+    # Check that the edges are identical
+    original_edges = original_graph.get_edges()
+    loaded_edges = loaded_graph.get_edges()
+
+    assert len(original_edges) == len(loaded_edges)
+    for edge in original_edges:
+        assert edge in loaded_edges
+
+    # Check that the types are correct
+    sample_edge = loaded_edges[0] 
+    assert isinstance(sample_edge[2], (sp.Expr, sp.Number))
