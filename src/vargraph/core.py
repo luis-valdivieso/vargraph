@@ -1,7 +1,8 @@
+import json
 from collections import deque
 
 import sympy as sp
-import json
+
 
 class VarGraph:
     """
@@ -478,7 +479,7 @@ class VarGraph:
             "graph": {}
         }
 
-        for u, neighbors in self._graph.items:
+        for u, neighbors in self._graph.items():
             export_data["graph"][u] = {}
             for v, data in neighbors.items():
                 export_data["graph"][u][v] = {
