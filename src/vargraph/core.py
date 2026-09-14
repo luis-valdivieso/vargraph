@@ -1,7 +1,7 @@
 from collections import deque
 
 import sympy as sp
-
+import json
 
 class VarGraph:
     """
@@ -464,3 +464,27 @@ class VarGraph:
         
         plt.show(block=False)
         return plt.gcf()
+
+    def save_to_json(self, filepath):
+        """
+        Serializes the internal graph dictionary to a JSON file.
+        SymPy expressions and logical conditions are converted to strings.
+
+        Args:
+            filepath (str): The path to the JSON file where the graph will be saved.
+        """
+        export_data = {
+            "directed": self.directed,
+            "graph": {}
+        }
+
+        for u, neighbors in self._graph.items:
+            export_data["graph"][u] = {}
+            for v, data in neighbors.items():
+                export_data["graph"][u][v] = {
+                    # Convert SymPy objects to string
+                    "weight": str(data["weight"]),
+                    "condition": str(data["condition"])
+                }
+        with open(filepath, 'w', encoding='utf-8') as f:
+            json.dump(export_data, f, indent=4)
