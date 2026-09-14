@@ -488,3 +488,37 @@ class VarGraph:
                 }
         with open(filepath, 'w', encoding='utf-8') as f:
             json.dump(export_data, f, indent=4)
+
+    @classmethod
+    def load_from_json(cls, filepath):
+        """
+        Reads a JSON file and instantiates a new VarGraph, restoring algebraic weights and boolean conditions via SymPy.
+
+        Args:
+            filepath (str): The path to the JSON file to read.
+
+        Returns:
+            new_graph: A new instance of the graph with the loaded topology.
+        """
+        with open(filepath, 'r', encoding='utf-8') as f:
+            import_data = json.load(f)
+
+        # Create a new instance with the correct directed property
+        is_directed = import_data.get("directed", False)
+        new_graph = cls(directed=is_directed)
+
+        graph_data = import_data.get("graph", {})
+
+        for u, neighbors in graph_data.items():
+            # Add node explicitly in case is a isolated node
+            new_graph.add_node(u)
+
+            for v, data in neighbors.items():
+                # add_edge calls sympify for the weight and condition
+                new_graph.add_edge(
+                    u,
+                    v,
+                    weight=data["weight"],
+                    condition=data["condition"]
+                ) 
+        return new_graph
